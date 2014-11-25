@@ -5,7 +5,7 @@
 char login[100], password[100];
 int type;
 int countOfUsers;
-int findId, bFindId;
+
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName){
    int i;
@@ -16,31 +16,9 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName){
    return 0;
 }
 
-void printIdName(){
-	printf(" %-20s ", "id");
-	printf("%s\n", "name");}
-static int showClients(void *NotUsed, int argc, char **argv, char **azColName){
-   printf(" %-20s ", argv[0] ? argv[0] : "NULL");
-   printf("%s ", argv[1] ? argv[1] : "NULL");
-   printf("\n");
-   return 0;
-}
 
 
 
-static int findIdForNewClient(void *NotUsed, int argc, char **argv, char **azColName){
-   int i;
-   if(bFindId)
-	   findId++;
-   for(i=0; i<argc; i++){
-      if(bFindId && findId-1!=atoi(argv[i])){
-		  --findId;
-		  bFindId = 0;
-	  }
-   }
-   i++;
-   return 0;
-}
 
 static int getTypeOfUser(void *NotUsed, int argc, char **argv, char **azColName){
    
@@ -66,9 +44,8 @@ int main()
 	
 	
 	char query[1000];
-	char fname[100],lname[100], email[100], password[100], ans, idChar[100], idChar2[100];
-	char accType[100];
-	char date[100] , interestRate[100] , monthlyQuota[100] , perTransactionFee[100] , perDayFee[100];
+	char format[] = "SELECT * FROM Personal WHERE Login = '%s' AND Password = '%s';";
+	char find[] = "SELECT Count(Personal.Login) AS MyCount FROM Personal WHERE Login = '%s';";
 	type = 0;
 	countOfUsers = 0;
 
