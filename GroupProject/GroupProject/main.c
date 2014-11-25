@@ -63,14 +63,6 @@ int main()
 	int a;
     char *zErrMsg = 0;
     int rc;
-	char format[] = "SELECT * FROM Personal WHERE Login = '%s' AND Password = '%s';";
-	char find[] = "SELECT Count(Personal.Login) AS MyCount FROM Personal WHERE Login = '%s';";
-	char showAllAccounts[] = "SELECT BANK_ACCOUNTS.number_of_account , BANK_ACCOUNTS.type_of_account , BANK_ACCOUNTS.client_id FROM  BANK_ACCOUNTS ORDER BY BANK_ACCOUNTS.number_of_account ASC ";
-	char findAccountsOfClient[] = "SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%s';";
-	char findAccountsOfClientFree[] = "SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id IS NULL;";
-	char setAccountForClient[] = "UPDATE BANK_ACCOUNTS SET client_id = '%s' WHERE number_of_account = '%s' AND client_id IS NULL;";
-	char deleteAccountFromClient[] = "UPDATE BANK_ACCOUNTS SET client_id = NULL WHERE number_of_account = '%s' AND client_id = '%s';";
-	char showAllClients[] = "SELECT client.id , client.full_name FROM client ORDER BY client.id ASC;";
 	
 	
 	char query[1000];
@@ -117,62 +109,9 @@ int main()
 		while(isTrue){
 			scanf("%s", str);//fgets(str, 100, stdin);
 			if(!strcmp(str, "help")){
-				printf("\n-----Vitaliy Efimik--------\nshowClients - show all clients\naccountsOfClient - edit relationships of accounts and clients\n ------------------------------------\n");
+				printf("\n\n");
 			}
-//----Vitaliy Efimik------------------------------------------------------------------------------------------------------------------------------------
-			else if(!strcmp(str,"showClients")){
-				printIdName();
-				rc = sqlite3_exec(db,showAllClients, showClients, 0, &zErrMsg);
-			}
-			else if(!strcmp(str,"accountsOfClient")){
-				printf("Input id client <= ");
-				scanf("%s",idChar);
-				sprintf_s(query, 1000, findAccountsOfClient, idChar);
-				rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-				printf( "\nadd, delete, end\n");
-				while(1){
-					printf("   <=");
-					scanf("%s", str);
-					if(!strcmp(str,"add")){
-						printf("Free accoutns: \n");
-						sprintf_s(query, 1000, findAccountsOfClientFree);
-						rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-						printf("Input account number <= ");
-						scanf("%s",idChar2);
-						printf("Save this data ? (y/n)");
-						scanf("%c",&ans);
-						scanf("%c",&ans);
-						if(ans == 'y'){
-							sprintf_s(query, 1000, setAccountForClient,idChar, idChar2);
-							rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-							printf("\nOK\n");
-						}
-						else{
-							printf("\nCancel\n");
-						}
-					}
-					else if(!strcmp(str,"delete")){
-						printf("Input account number <= ");
-						scanf("%s",idChar2);
-						printf("Save this data ? (y/n)");
-						scanf("%c",&ans);
-						scanf("%c",&ans);
-						if(ans == 'y'){
-							sprintf_s(query, 1000, deleteAccountFromClient,idChar2, idChar);
-							rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-							printf("\nOK\n");
-						}
-						else{
-							printf("\nCancel\n");
-						}
-						
-					}
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------
-					else if(!strcmp(str,"end")){
-						break;
-					}
-				}
-			}
+
 			else if(!strcmp(str,"exit")){
 				isTrue = 0;
 				printf("By!");
