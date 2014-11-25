@@ -68,7 +68,6 @@ static int delAccount(){
 	char query[1000], idChar[100], ans;
 	char showDataAboutAccount[] = "SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
 	char deleteAccount[] = "DELETE FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
-	char delCard[] = "DELETE FROM Card WHERE Card.accNum = '%s';";
 	printf("Input account id <= ");
 	scanf("%s", idChar);
 	sprintf_s(query, 1000, showDataAboutAccount, idChar);
@@ -78,8 +77,6 @@ static int delAccount(){
 	scanf("%c",&ans);
 	if(ans == 'y'){
 		sprintf_s(query, 1000, deleteAccount, idChar);
-		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-		sprintf_s(query, 1000, delCard, idChar);
 		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
 		printf("\nOK\n");
 	}
@@ -113,6 +110,7 @@ int main()
 	countOfUsers = 0;
 
 	rc = sqlite3_open("Database2.db", &db);
+	sqlite3_exec(db, "PRAGMA foreign_keys = ON", NULL, NULL, NULL);
 
 	if( rc ){	
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
