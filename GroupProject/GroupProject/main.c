@@ -391,7 +391,8 @@ int main()
 	countOfUsers = 0;
 
 	rc = sqlite3_open("Database2.db", &db);
-
+	sqlite3_exec(db, "PRAGMA foreign_keys = ON", NULL, NULL, NULL);
+	
 	if( rc ){	
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       sqlite3_close(db);
