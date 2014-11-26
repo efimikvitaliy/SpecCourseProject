@@ -72,7 +72,7 @@ static int callbackInt(void *NotUsed, int argc, char **argv, char **azColName){
 	return 0;
 }
 static int callbackShow(void *type, int argc, char **argv, char **azColName){
-	int i;
+	int i, j;
 	const int t = (int)(type);
 	for (i = 0; i < argc; i++){
 		printf(argv[i]);
@@ -91,7 +91,7 @@ static int callbackShow(void *type, int argc, char **argv, char **azColName){
 				lim = 10;
 				break;
 			}
-			for (int j = strlen(argv[i]); j < lim; j++){
+			for (j = strlen(argv[i]); j < lim; j++){
 				printf(" ");
 			}
 		}
@@ -172,6 +172,7 @@ static int addClient() {
 	char secondName[LIMITCHAR];
 	char email[LIMITCHAR];
 	char password[LIMITCHAR];
+	char req[COUNT];
 	printf(msgEnterFirstName);
 	scanf("%s", firstName);
 	printf(msgEnterSecondName);
@@ -180,7 +181,6 @@ static int addClient() {
 	scanf("%s", email);
 	printf(msgEnterPassword);
 	scanf("%s", password);
-	char req[COUNT];
 	sprintf_s(req, COUNT, "INSERT INTO CLIENT(first_name, second_name, email, password) VALUES('%s','%s','%s','%s')",
 		firstName, secondName, email, password);
 	rc = sqlite3_exec(db, req, NULL, NULL, &zErrMsg);
@@ -224,9 +224,16 @@ int deleteClientFromDB(char* id){
 	return 0;
 }
 int updateClient(char* input) {
+	struct Client *client = (Client*)malloc(sizeof(Client));
 	int pos = strlen(msgUpdateClient);
 	int delpos = strlen(input) - 1;
+	char *zErrMsg = 0;
 	char* args;
+	int rc;
+	char req[COUNT];
+	char email[COUNT];
+	char password[LIMITCHAR];
+	char req1[COUNT];
 	if ((delpos >= pos) && (input[pos] == ' ')) {
 		args = input + pos + 1;
 		input[pos] = '\0';
@@ -237,11 +244,8 @@ int updateClient(char* input) {
 			}
 			*args = ' ';
 			arg1 = input + pos + 1;
-			struct Client *client = (Client*)malloc(sizeof(Client));
 			client->id = -1;
-			char *zErrMsg = 0;
-			int rc;
-			char req[COUNT];
+			
 			sprintf_s(req, COUNT, "select * from CLIENT WHERE id = \"%s\" ", arg1);
 			rc = sqlite3_exec(db, req, callbackClient, client, &zErrMsg);
 			if (rc != SQLITE_OK){
@@ -252,11 +256,9 @@ int updateClient(char* input) {
 				printf("Invalid clientId\n");
 				return 0;
 			}
-			char email[COUNT];
-			char password[LIMITCHAR];
 			printf(msgEnterEmail);
 			fgets(email, COUNT, stdin);
-			int pos = strlen(email) - 1;
+			pos = strlen(email) - 1;
 			if (email[pos] == '\n')
 				email[pos] = '\0';
 			strcpy_s(client->Email, COUNT, email);
@@ -266,7 +268,7 @@ int updateClient(char* input) {
 			if (password[pos] == '\n')
 				password[pos] = '\0';
 			strcpy_s(client->Password, LIMITCHAR, password);
-			char req1[COUNT];
+			
 			sprintf_s(req1, COUNT, "UPDATE CLIENT SET email='%s', password='%s' WHERE id='%d'",
 				client->Email, client->Password, client->id);
 			rc = sqlite3_exec(db, req1, NULL, NULL, &zErrMsg);
@@ -293,12 +295,14 @@ int showAccounts() {
 int showBalance(char *updateBalanceTemplate, char *showBalanceTemplate) {
 	char query[1000], ID[100];
 	char getViewBalanceFeeQuery[] = "SELECT BANK_CONFIG.viewBalanceFee FROM BANK_CONFIG";
+	int viewBalanceFee;
+	int balance;
 	scanf("%s", ID);
 	sprintf_s(query, 1000, showBalanceTemplate, ID);
 	rc = sqlite3_exec(db, query, callbackInt, 0, &zErrMsg);
-	int balance = resSel;
+	balance = resSel;
 	rc = sqlite3_exec(db, getViewBalanceFeeQuery, callbackInt, 0, &zErrMsg);
-	int viewBalanceFee = resSel;
+	viewBalanceFee = resSel;
 	balance -= viewBalanceFee;
 	if (balance < 0){ balance = 0; }
 	sprintf_s(query, 1000, updateBalanceTemplate, balance, ID);
@@ -314,8 +318,9 @@ int showBalanceCalled() {
 	char updateAccountBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = '%s';";
 	char showCardBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS INNER JOIN CARD ON BANK_ACCOUNTS.account_id = CARD.accNum WHERE CARD.id = '%s';";
 	char updateCardBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = (SELECT CARD.accNum FROM CARD WHERE CARD.id = '%s');";
-	printf("Enter whether you want to see balance of a card or account (C/A):");
 	char balanceType[100];
+	printf("Enter whether you want to see balance of a card or account (C/A):");
+	
 	scanf("%s", &balanceType);
 	if (balanceType[0] == 'C' || balanceType[0] == 'c'){
 		printf("Enter card number:");
