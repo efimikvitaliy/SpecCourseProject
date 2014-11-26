@@ -7,6 +7,8 @@
 #define COUNT 100
 const char msgAddClient[] = "addClient\n";
 const char msgUpdateClient[] = "updateClient\0";
+const char msgShowAccounts[] = "showAccounts";
+const char msgShowBalance[] = "showBalance";
 
 const char msgEnterFirstName[] = "Enter First Name: \n";
 const char msgEnterSecondName[] = "Enter Second Name: \n";
@@ -203,6 +205,59 @@ int updateClient(char* input) {
 	return 0;
 }
 
+int showAccounts() {
+	char query[1000];
+	char clientID[100];
+	char showAccountsTemplate[] = "SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%s';";
+	printf("Enter client identification number:");
+	scanf("%s", clientID);
+	sprintf_s(query, 1000, showAccountsTemplate, clientID);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+
+	return 0;
+}
+
+int showCardBalance() {
+
+	char query[1000], cardID[100];
+	char showCardBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS INNER JOIN CARD ON BANK_ACCOUNTS.account_id = CARD.accNum WHERE CARD.id = '%s';";
+	printf("Enter card number:");
+	scanf("%s", cardID);
+	sprintf_s(query, 1000, showCardBalanceTemplate, cardID);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	return 0;
+}
+
+int showAccountBalance() {
+
+	char query[1000], accountID[100];
+	char showAccountBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
+	printf("Enter account number:");
+	scanf("%s", accountID);
+	sprintf_s(query, 1000, showAccountBalanceTemplate, accountID);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	return 0;
+}
+
+
+int showBalance() {
+
+	printf("Enter whether you want to see balance of a card or account (C/A):");
+	char balanceType[100];
+	scanf("%s", &balanceType);
+	if (balanceType[0] == 'C' || balanceType[0] == 'c'){
+		showCardBalance();
+	}
+	else if (balanceType[0] == 'A' || balanceType[0] == 'a'){
+		showAccountBalance();
+	}
+	else{
+		printf("Invalid balance type.\n");
+	}
+
+	return 0;
+}
+
 static int getTypeOfUser(void *NotUsed, int argc, char **argv, char **azColName){
    
     if( 0 < argc ){
@@ -281,7 +336,7 @@ int main()
 			}
 			else if(!strcmp(str,"exit\n")){
 				isTrue = 0;
-				printf("By!");
+				printf("Bye!");
 				break;
 			}
 			else{
@@ -298,9 +353,15 @@ int main()
 			if(!strcmp(str,"help")){
 				
 				}
+			else if (!strcmp(str, msgShowAccounts)){
+				showAccounts();
+			}
+			else if (!strcmp(str, msgShowBalance)){
+				showBalance();
+			}
 			else if(!strcmp(str,"exit")){
 				isTrue = 0;
-				printf("By!");
+				printf("Bye!");
 				break;
 			}
 			else{
