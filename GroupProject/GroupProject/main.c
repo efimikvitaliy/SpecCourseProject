@@ -12,7 +12,7 @@ const char msgAddClient[] = "addClient\n";
 const char msgShowClients[] = "showClients\n";
 const char msgDeleteClient[] = "deleteClient\0";
 const char msgUpdateClient[] = "updateClient\0";
-const char msgShowAccounts[] = "showAccounts";
+const char msgShowAccounts[] = "showAccounts\n";
 const char msgShowBalance[] = "showBalance";
 
 const char msgEnterFirstName[] = "Enter First Name: \n";
@@ -99,7 +99,6 @@ static int callbackShow(void *type, int argc, char **argv, char **azColName){
 	printf("\n");
 	return 0;
 }
-
 static int findIdForNewAccount(void *NotUsed, int argc, char **argv, char **azColName){//
    int i;
    if(bFindId)
@@ -451,11 +450,21 @@ void getAddMoney(int ot){
 	printf("OK\n");
 }
 
+int accountList(){
+	char query[1000] = "SELECT * FROM BANK_ACCOUNTS;";
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	return 0;
+}
+
 
 int main()
 {
 	int a;
-	
 	char query[1000];
 	char format[] = "SELECT * FROM Personal WHERE Login = '%s' AND Password = '%s';";
 	char find[] = "SELECT Count(Personal.Login) AS MyCount FROM Personal WHERE Login = '%s';";
@@ -515,6 +524,9 @@ int main()
 			}
 			else if (strcmp(str, msgShowClients) == 0) {
 				showClientsFromDB();
+			}
+			else if(strcmp(str, msgShowAccounts) == 0){
+				accountList();
 			}
 			else if (strncmp(str, msgDeleteClient, strlen(msgDeleteClient)) == 0) {
 				deleteClient(str);
