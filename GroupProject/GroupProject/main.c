@@ -459,8 +459,7 @@ int main()
 		while(isTrue){
 			scanf("%s", str);//fgets(str, 100, stdin);
 			if(!strcmp(str,"help")){
-					printf("\nshowAccounts - show accounts of the client\nshowBalance - show balance of the account or card\n");
-
+				printf("\nshowAccounts - show accounts of the client\nshowBalance - show balance of the account or card\n");
 				}
 			else if (!strcmp(str, msgShowAccounts)){
 				showAccounts();
