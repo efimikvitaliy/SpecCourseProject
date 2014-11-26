@@ -5,7 +5,12 @@
 
 #define LIMITCHAR 20
 #define COUNT 100
+#define SHOWCLIENTS 10001
+#define SHOWACCOUNTS 10002
+#define SHOWCARDS 10003
 const char msgAddClient[] = "addClient\n";
+const char msgShowClients[] = "showClients\n";
+const char msgDeleteClient[] = "deleteClient\0";
 const char msgUpdateClient[] = "updateClient\0";
 const char msgShowAccounts[] = "showAccounts";
 const char msgShowBalance[] = "showBalance";
@@ -66,7 +71,34 @@ static int callbackInt(void *NotUsed, int argc, char **argv, char **azColName){
 	resSel = atoi(argv[0]);
 	return 0;
 }
-
+static int callbackShow(void *type, int argc, char **argv, char **azColName){
+	int i;
+	const int t = (int)(type);
+	for (i = 0; i < argc; i++){
+		printf(argv[i]);
+		if (i != argv - 1) {
+			int lim = 0;
+			switch (t) {
+			case SHOWCLIENTS:
+				lim = LIMITCHAR;
+				if (i == 0)
+					lim = 7;
+				break;
+			case SHOWACCOUNTS:
+				lim = 10;
+				break;
+			case SHOWCARDS:
+				lim = 10;
+				break;
+			}
+			for (int j = strlen(argv[i]); j < lim; j++){
+				printf(" ");
+			}
+		}
+	}
+	printf("\n");
+	return 0;
+}
 
 static int findIdForNewAccount(void *NotUsed, int argc, char **argv, char **azColName){//
    int i;
@@ -155,7 +187,42 @@ static int addClient() {
 	printf("Added\n");
 	return 0;
 }
+int showClientsFromDB(){
+	
+	char *zErrMsg = 0;
+	int rc;
+	printf("-id-   -FirstName-         -SecondName-        -Email-        -Password- \n");
+	rc = sqlite3_exec(db, "SELECT * FROM CLIENT", callbackShow, SHOWCLIENTS, &zErrMsg);
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	return 0;
+}int deleteClient(char* input) {
+	char clientId[LIMITCHAR];
+	printf("Input Client id:");
+	scanf("%s", clientId);
+	deleteClientFromDB(clientId);
+	return 0;
+}
+int deleteClientFromDB(char* id){
+	char *zErrMsg = 0;
+	int rc;
+	char req[COUNT];
 
+	sprintf_s(req, COUNT, "DELETE FROM CLIENT WHERE id = '%s'",
+			id);
+	rc = sqlite3_exec(db, req, NULL, NULL, &zErrMsg);
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	else {
+		printf("Client deleted \n");
+	}
+
+	return 0;
+}
 int updateClient(char* input) {
 	int pos = strlen(msgUpdateClient);
 	int delpos = strlen(input) - 1;
@@ -440,6 +507,12 @@ int main()
 			}
 			else if (strcmp(str, msgAddClient) == 0){
 				addClient();
+			}
+			else if (strcmp(str, msgShowClients) == 0) {
+				showClientsFromDB();
+			}
+			else if (strncmp(str, msgDeleteClient, strlen(msgDeleteClient)) == 0) {
+				deleteClient(str);
 			}
 			else if (strncmp(str, msgUpdateClient, strlen(msgUpdateClient)) == 0) {
 				updateClient(str);
