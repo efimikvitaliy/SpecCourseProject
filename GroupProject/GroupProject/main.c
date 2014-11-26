@@ -24,6 +24,7 @@ char str[100];
 int isTrue = 1;
 char *zErrMsg = 0;
 int rc;
+int resSel = 0;
 
 struct Client{
 	int id;
@@ -61,6 +62,11 @@ static int callbackClient(void *user, int argc, char **argv, char **azColName){
 	}
 	return 0;
 }
+static int callbackInt(void *NotUsed, int argc, char **argv, char **azColName){
+	resSel = atoi(argv[0]);
+	return 0;
+}
+
 
 static int findIdForNewAccount(void *NotUsed, int argc, char **argv, char **azColName){//
    int i;
@@ -271,6 +277,108 @@ static int getCountOfUsersWithLogin(void *NotUsed, int argc, char **argv, char *
 	countOfUsers = atoi(argv[0]);
 	return 0;
 }
+
+void getAddMoney(int ot){
+	char queryBalance[500];
+	char buf[50];
+	int acc_num = 0;
+	int add_bal = 0;
+	int balance = 0;
+	int type = 0;
+	time_t rawtime;
+	struct tm * timeinfo;
+	if(ot == 1){
+		printf("Get money\n");
+	}
+	else if(ot == 2){
+		printf("Add money\n");
+	}
+	printf("Choose type: 1- card, 2- account\n");
+	scanf("%d", &type);
+	if(type == 1){
+		printf("Card number:\n");
+		scanf("%s", &buf);
+		strcpy(queryBalance, "SELECT accNum FROM CARD WHERE id = ");
+		strcat(queryBalance, buf);
+
+		rc = sqlite3_exec(db, queryBalance, callbackInt, 0, &zErrMsg);
+		if( rc!=SQLITE_OK ){
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+			return;
+		}
+		acc_num = resSel;
+	}
+	else if(type == 2){
+		printf("Account number:\n");
+		scanf("%d", &acc_num);
+	}
+	else{
+		printf("Incorrect type\n");
+		return;
+	}
+	strcpy(queryBalance, "SELECT balance FROM BANK_ACCOUNTS WHERE account_id =");
+	itoa(acc_num, buf, 10);
+
+	strcat(queryBalance, buf);
+	rc = sqlite3_exec(db, queryBalance, callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	balance = resSel;
+	printf("Sum:\n");
+	scanf("%d", &add_bal);
+	if(ot == 1){
+		if(balance < add_bal){
+			printf("This is so much\n");
+			return;
+		}
+		balance -= add_bal;
+	}
+	else if(ot == 2){
+		balance += add_bal;
+	}
+	strcpy(queryBalance, "UPDATE BANK_ACCOUNTS SET balance = ");
+	itoa(balance, buf, 10);
+	strcat(queryBalance, buf);
+	strcat(queryBalance, " WHERE account_id = ");
+	itoa(acc_num, buf, 10);
+	strcat(queryBalance, buf);
+
+	rc = sqlite3_exec(db, queryBalance, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	strcpy(queryBalance, "SELECT TotalTransactions FROM BANK_ACCOUNTS WHERE account_id = ");
+	itoa(acc_num, buf, 10);
+	strcat(queryBalance, buf);
+	rc = sqlite3_exec(db, queryBalance, callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	resSel++;
+	strcpy(queryBalance, "UPDATE BANK_ACCOUNTS SET totalTransactions = ");
+	itoa(resSel, buf, 10);
+	strcat(queryBalance, buf);
+	strcat(queryBalance, " WHERE account_id = ");
+	itoa(acc_num, buf, 10);
+	strcat(queryBalance, buf);
+	rc = sqlite3_exec(db, queryBalance, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	printf("OK\n");
+}
+
+
 int main()
 {
 	int a;
@@ -363,6 +471,12 @@ int main()
 				isTrue = 0;
 				printf("Bye!");
 				break;
+			}
+			else if(!strcmp(str,"get_money")){
+				getAddMoney(1);
+			}
+			else if(!strcmp(str,"add_money")){
+				getAddMoney(2);
 			}
 			else{
 				fgets(str, 100, stdin);
