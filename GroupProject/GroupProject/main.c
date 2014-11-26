@@ -223,61 +223,40 @@ int showAccounts() {
 	return 0;
 }
 
-int showCardBalance() {
-
-	char query[1000], cardID[100];
-	char showCardBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS INNER JOIN CARD ON BANK_ACCOUNTS.account_id = CARD.accNum WHERE CARD.id = '%s';";
-	char updateBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = (SELECT CARD.accNum FROM CARD WHERE CARD.id = '%s');";
+int showBalance(char *updateBalanceTemplate, char *showBalanceTemplate) {
+	char query[1000], ID[100];
 	char getViewBalanceFeeQuery[] = "SELECT BANK_CONFIG.viewBalanceFee FROM BANK_CONFIG";
-	printf("Enter card number:");
-	scanf("%s", cardID);
-	sprintf_s(query, 1000, showCardBalanceTemplate, cardID);
+	scanf("%s", ID);
+	sprintf_s(query, 1000, showBalanceTemplate, ID);
 	rc = sqlite3_exec(db, query, callbackInt, 0, &zErrMsg);
 	int balance = resSel;
 	rc = sqlite3_exec(db, getViewBalanceFeeQuery, callbackInt, 0, &zErrMsg);
 	int viewBalanceFee = resSel;
 	balance -= viewBalanceFee;
 	if (balance < 0){ balance = 0; }
-	sprintf_s(query, 1000, updateBalanceTemplate, balance, cardID);
+	sprintf_s(query, 1000, updateBalanceTemplate, balance, ID);
 	rc = sqlite3_exec(db, query, NULL, 0, &zErrMsg);
-	sprintf_s(query, 1000, showCardBalanceTemplate, cardID);
+	sprintf_s(query, 1000, showBalanceTemplate, ID);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	return 0;
 }
 
-int showAccountBalance() {
+int showBalanceCalled() {
 
-	char query[1000], accountID[100];
 	char showAccountBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
-	char updateBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = '%s';";
-	char getViewBalanceFeeQuery[] = "SELECT BANK_CONFIG.viewBalanceFee FROM BANK_CONFIG";
-	printf("Enter account number:");
-	scanf("%s", accountID);
-	sprintf_s(query, 1000, showAccountBalanceTemplate, accountID);
-	rc = sqlite3_exec(db, query, callbackInt, 0, &zErrMsg);
-	int balance = resSel;
-	rc = sqlite3_exec(db, getViewBalanceFeeQuery, callbackInt, 0, &zErrMsg);
-	int viewBalanceFee = resSel;
-	balance -= viewBalanceFee;
-	if (balance < 0){ balance = 0; }
-	sprintf_s(query, 1000, updateBalanceTemplate, balance, accountID);
-	rc = sqlite3_exec(db, query, NULL, 0, &zErrMsg);
-	sprintf_s(query, 1000, showAccountBalanceTemplate, accountID);
-	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
-	return 0;
-}
-
-
-int showBalance() {
-
+	char updateAccountBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = '%s';";
+	char showCardBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS INNER JOIN CARD ON BANK_ACCOUNTS.account_id = CARD.accNum WHERE CARD.id = '%s';";
+	char updateCardBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = (SELECT CARD.accNum FROM CARD WHERE CARD.id = '%s');";
 	printf("Enter whether you want to see balance of a card or account (C/A):");
 	char balanceType[100];
 	scanf("%s", &balanceType);
 	if (balanceType[0] == 'C' || balanceType[0] == 'c'){
-		showCardBalance();
+		printf("Enter card number:");
+		showBalance(updateCardBalanceTemplate, showCardBalanceTemplate);
 	}
 	else if (balanceType[0] == 'A' || balanceType[0] == 'a'){
-		showAccountBalance();
+		printf("Enter account number:");
+		showBalance(updateAccountBalanceTemplate, showAccountBalanceTemplate);
 	}
 	else{
 		printf("Invalid balance type.\n");
@@ -487,7 +466,7 @@ int main()
 				showAccounts();
 			}
 			else if (!strcmp(str, msgShowBalance)){
-				showBalance();
+				showBalanceCalled();
 			}
 			else if(!strcmp(str,"exit")){
 				isTrue = 0;
