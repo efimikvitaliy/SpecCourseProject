@@ -227,8 +227,19 @@ int showCardBalance() {
 
 	char query[1000], cardID[100];
 	char showCardBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS INNER JOIN CARD ON BANK_ACCOUNTS.account_id = CARD.accNum WHERE CARD.id = '%s';";
+	char updateBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = (SELECT CARD.accNum FROM CARD WHERE CARD.id = '%s');";
+	char getViewBalanceFeeQuery[] = "SELECT BANK_CONFIG.viewBalanceFee FROM BANK_CONFIG";
 	printf("Enter card number:");
 	scanf("%s", cardID);
+	sprintf_s(query, 1000, showCardBalanceTemplate, cardID);
+	rc = sqlite3_exec(db, query, callbackInt, 0, &zErrMsg);
+	int balance = resSel;
+	rc = sqlite3_exec(db, getViewBalanceFeeQuery, callbackInt, 0, &zErrMsg);
+	int viewBalanceFee = resSel;
+	balance -= viewBalanceFee;
+	if (balance < 0){ balance = 0; }
+	sprintf_s(query, 1000, updateBalanceTemplate, balance, cardID);
+	rc = sqlite3_exec(db, query, NULL, 0, &zErrMsg);
 	sprintf_s(query, 1000, showCardBalanceTemplate, cardID);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	return 0;
@@ -238,8 +249,19 @@ int showAccountBalance() {
 
 	char query[1000], accountID[100];
 	char showAccountBalanceTemplate[] = "SELECT BANK_ACCOUNTS.balance FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
+	char updateBalanceTemplate[] = "UPDATE BANK_ACCOUNTS SET balance = '%d' WHERE BANK_ACCOUNTS.account_id = '%s';";
+	char getViewBalanceFeeQuery[] = "SELECT BANK_CONFIG.viewBalanceFee FROM BANK_CONFIG";
 	printf("Enter account number:");
 	scanf("%s", accountID);
+	sprintf_s(query, 1000, showAccountBalanceTemplate, accountID);
+	rc = sqlite3_exec(db, query, callbackInt, 0, &zErrMsg);
+	int balance = resSel;
+	rc = sqlite3_exec(db, getViewBalanceFeeQuery, callbackInt, 0, &zErrMsg);
+	int viewBalanceFee = resSel;
+	balance -= viewBalanceFee;
+	if (balance < 0){ balance = 0; }
+	sprintf_s(query, 1000, updateBalanceTemplate, balance, accountID);
+	rc = sqlite3_exec(db, query, NULL, 0, &zErrMsg);
 	sprintf_s(query, 1000, showAccountBalanceTemplate, accountID);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	return 0;
