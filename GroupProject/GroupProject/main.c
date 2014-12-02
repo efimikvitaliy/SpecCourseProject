@@ -360,22 +360,24 @@ static int addAccount(){
 	char query[1000];
 	char clientCode[100], startBalance[100];
 	char accFindNewId[] = "SELECT BANK_ACCOUNTS.account_id FROM BANK_ACCOUNTS ORDER BY BANK_ACCOUNTS.account_id ASC;";
-	char accInsertOperation[] = "INSERT INTO BANK_ACCOUNTS (balance, account_id, client_id, type_of_account, totalTransactions) VALUES ('%s','%d', '%s', 'actual', '0');";
+	char accInsertOperation[] = "INSERT INTO BANK_ACCOUNTS (balance, client_id, type_of_account, totalTransactions) VALUES ('%s', '%s', 'actual', '0');";
 	char ans;
 
 	bFindId = 1; findId = 1;
-	rc = sqlite3_exec(db,accFindNewId, findIdForNewAccount, 0, &zErrMsg);
-	printf("\nNew account number : %d\n", findId);
 	printf("Input client code<= ");
 	scanf("%s", clientCode);
 	printf("Input start balance<= ");
 	scanf("%s", startBalance);
-	printf("Data about account:\nAccount id: %d\nclient code: '%s'\nStart balance: '%s'\nAdd new account y/n?",findId,clientCode,startBalance);
+	printf("Data about account:\nclient code: '%s'\nStart balance: '%s'\nAdd new account y/n?",clientCode,startBalance);
 	scanf("%c",&ans);
 	scanf("%c",&ans);
 	if(ans == 'y'){
-		sprintf_s(query, 1000, accInsertOperation, startBalance, findId,clientCode);
+		sprintf_s(query, 1000, accInsertOperation, startBalance, clientCode);
 		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+		if (rc != SQLITE_OK){
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+		}
 		printf("\nOK\n");
 		}
 	else{
@@ -390,6 +392,12 @@ static int delAccount(){
 	char showDataAboutAccount[] = "SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
 	char deleteAccount[] = "DELETE FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
 	char delCard[] = "DELETE FROM Card WHERE Card.accNum = '%s';";
+	char insertClientIntoHistory[] = "INSERT INTO CLIENT_DEL SELECT * FROM CLIENT WHERE CLIENT.id IN (SELECT client_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s');";
+	char insertCardsIntoHistory[] = "INSERT INTO CARD_DEL SELECT * FROM CARD WHERE CARD.accNum = '%s';"; //id, pass, accNum, csv, expireDate, isDeleted, isLocked
+	char insertTransactionsIntoHistory[] = "INSERT INTO TRANSACTION_DEL SELECT * FROM \"TRANSACTION\" WHERE Account_number = '%s';";
+	char insertAccountIntoHistory[] = "INSERT INTO BANK_ACCOUNTS_DEL SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.account_id = '%s';";
+	char updateAccountIntoHistory[] = "UPDATE BANK_ACCOUNTS_DEL SET isDeleted = '1' WHERE BANK_ACCOUNTS_DEL.account_id = '%s';";
+	char updateCardsIntoHistory[] = "UPDATE CARD_DEL SET isDeleted = '1' WHERE CARD_DEL.accNum = '%s';";
 	printf("Input account id <= ");
 	scanf("%s", idChar);
 	sprintf_s(query, 1000, showDataAboutAccount, idChar);
@@ -398,15 +406,45 @@ static int delAccount(){
 	scanf("%c",&ans);
 	scanf("%c",&ans);
 	if(ans == 'y'){
+		sprintf_s(query,1000,insertClientIntoHistory, idChar);
+		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+		sprintf_s(query,1000,insertAccountIntoHistory, idChar);
+		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+		sprintf_s(query,1000,insertTransactionsIntoHistory, idChar);
+		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+		sprintf_s(query,1000,insertCardsIntoHistory, idChar);
+		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
 		sprintf_s(query, 1000, deleteAccount, idChar);
 		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
-		sprintf_s(query, 1000, delCard, idChar);
+		sprintf_s(query,1000,updateAccountIntoHistory, idChar);
+		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+		sprintf_s(query,1000,updateCardsIntoHistory, idChar);
 		rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
 		printf("\nOK\n");
 	}
 	else{
 		printf("\nCancel\n");
 	}
+}
+
+static int lockCard() {
+	char query[1000], idChar[100];
+	char lock[] = "UPDATE CARD SET isLocked = '1' WHERE id = '%s';";
+	printf("Input card id <= ");
+	scanf("%s", idChar);
+	sprintf_s(query,1000,lock, idChar);
+	rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+	printf("\nOK\n");
+}
+
+static int unlockCard() {
+	char query[1000], idChar[100];
+	char lock[] = "UPDATE CARD SET isLocked = '0' WHERE id = '%s';";
+	printf("Input card id <= ");
+	scanf("%s", idChar);
+	sprintf_s(query,1000,lock, idChar);
+	rc = sqlite3_exec(db,query, callback, 0, &zErrMsg);
+	printf("\nOK\n");
 }
 
 static int addClient() {
@@ -754,13 +792,19 @@ int main()
 			fgets(str, 100, stdin);
 			if(!strcmp(str, "help\n")){
 				printf("\naddClient - add client\nupdateClient client_id - update client\n");
-				printf("\naddAccount - add account\ndelAccount - delete account\n");
+				printf("\naddAccount - add account\ndelAccount - delete account\nlockCard - lock card\nunlockCard - unlock card\n");
 			}
 			else if(!strcmp(str, "addAccount\n" )){
 				addAccount();
 			}
 			else if(!strcmp(str,"delAccount\n")){
 				delAccount();
+			}
+			else if(!strcmp(str,"lockCard\n")){
+				lockCard();
+			}
+			else if(!strcmp(str,"unlockCard\n")){
+				unlockCard();
 			}
 			else if (strcmp(str, msgAddClient) == 0){
 				addClient();
