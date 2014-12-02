@@ -40,6 +40,16 @@ struct Client{
 };
 typedef struct Client Client;
 
+struct Config{
+	double interestRate;
+	int monthlyQuota;
+	double perTransactionFee;
+	int id;
+	double perDayFee;
+	int daysLimit;
+	char date[COUNT];
+};typedef struct Config Config;
+
 static int callback(void *NotUsed, int argc, char **argv, char **azColName){
    int i;
    for(i=0; i<argc; i++){
@@ -64,6 +74,28 @@ static int callbackClient(void *user, int argc, char **argv, char **azColName){
 			strncpy_s(client->Email, COUNT, argv[i], COUNT);
 		if (strcmp(azColName[i], "password") == 0)
 			strncpy_s(client->Email, LIMITCHAR, argv[i], LIMITCHAR);
+	}
+	return 0;
+}
+static int callbackConfig(void *user, int argc, char **argv, char **azColName){
+	int i;
+	Config* config = (Config*)user;
+	for (i = 0; i < argc; i++){
+		if (strcmp(azColName[i], "id") == 0) {
+			config->id = atoi(argv[i]);
+		}
+		if (strcmp(azColName[i], "daysLimit") == 0)
+			config->daysLimit = atoi(argv[i]);
+		if (strcmp(azColName[i], "date") == 0)
+			strncpy_s(config->date, COUNT, argv[i], COUNT);
+		if (strcmp(azColName[i], "interestRate") == 0)
+			config->interestRate = atof(argv[i]);
+		if (strcmp(azColName[i], "monthlyQuota") == 0)
+			config->monthlyQuota = atoi(argv[i]);
+		if (strcmp(azColName[i], "perDayFee") == 0)
+			config->perDayFee = atof(argv[i]);
+		if (strcmp(azColName[i], "perTransactionFee") == 0)
+			config->perTransactionFee = atof(argv[i]);
 	}
 	return 0;
 }
@@ -98,6 +130,217 @@ static int callbackShow(void *type, int argc, char **argv, char **azColName){
 	}
 	printf("\n");
 	return 0;
+}
+void setInterestRate(){
+	char query[500];
+	char buf[50];
+	struct Config *config = (Config*)malloc(sizeof(Config));
+	double rate;
+	char result[500];
+	time_t rawtime;
+	struct tm * timeinfo;
+	int id = 0;
+	printf("Set interest rate\n");
+	printf("Enter interest rate: ");
+	scanf("%lf", &rate);
+
+	rc = sqlite3_exec(db, "SELECT MAX(id) FROM BANK_CONFIG", callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	id = resSel;
+	strcpy(query, "SELECT * FROM BANK_CONFIG WHERE id=");
+	itoa(id, buf, 10);
+	strcat(query, buf);
+	rc = sqlite3_exec(db, query, callbackConfig, config, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	++id;
+	config->interestRate = rate;
+	config->id = id;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	strcat(query,  asctime (timeinfo));
+	strcpy(config->date,  asctime (timeinfo));
+    sprintf_s(result, 500, "INSERT INTO BANK_CONFIG(date, daysLimit, id, interestRate, monthlyQuota, perDayFee, perTransactionFee) VALUES('%s','%d','%d','%f', '%d', '%f', '%f')",
+		config->date, config->daysLimit, config->id, config->interestRate, config->monthlyQuota, config->perDayFee,config->perTransactionFee);
+	rc = sqlite3_exec(db, result, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK )
+	{
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	else 
+		printf("OK\n");
+}
+void setPerDayFee(){
+	char query[500];
+	char buf[50];
+	struct Config *config = (Config*)malloc(sizeof(Config));
+	double perDayFee;
+	char result[500];
+	time_t rawtime;
+	struct tm * timeinfo;
+	int id = 0;
+	printf("Set per day fee\n");
+	printf("Enter per day fee: ");
+	scanf("%lf", &perDayFee);
+
+	rc = sqlite3_exec(db, "SELECT MAX(id) FROM BANK_CONFIG", callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	id = resSel;
+	strcpy(query, "SELECT * FROM BANK_CONFIG WHERE id=");
+	itoa(id, buf, 10);
+	strcat(query, buf);
+	rc = sqlite3_exec(db, query, callbackConfig, config, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	++id;
+	config->perDayFee = perDayFee;
+	config->id = id;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	strcat(query,  asctime (timeinfo));
+	strcpy(config->date,  asctime (timeinfo));
+    sprintf_s(result, 500, "INSERT INTO BANK_CONFIG(date, daysLimit, id, interestRate, monthlyQuota, perDayFee, perTransactionFee) VALUES('%s','%d','%d','%f', '%d', '%f', '%f')",
+		config->date, config->daysLimit, config->id, config->interestRate, config->monthlyQuota, config->perDayFee,config->perTransactionFee);
+	rc = sqlite3_exec(db, result, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK )
+	{
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	else 
+		printf("OK\n");
+}
+void setMonthlyQuota(){
+	char query[500];
+	char buf[50];
+	struct Config *config = (Config*)malloc(sizeof(Config));
+	int monthlyQuota;
+	char result[500];
+	time_t rawtime;
+	struct tm * timeinfo;
+	int id = 0;
+	printf("Set monthly quota\n");
+	printf("Enter monthly quota: ");
+	scanf("%d", &monthlyQuota);
+
+	rc = sqlite3_exec(db, "SELECT MAX(id) FROM BANK_CONFIG", callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	id = resSel;
+	strcpy(query, "SELECT * FROM BANK_CONFIG WHERE id=");
+	itoa(id, buf, 10);
+	strcat(query, buf);
+	rc = sqlite3_exec(db, query, callbackConfig, config, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	++id;
+	config->monthlyQuota = monthlyQuota;
+	config->id = id;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	strcat(query,  asctime (timeinfo));
+	strcpy(config->date,  asctime (timeinfo));
+    sprintf_s(result, 500, "INSERT INTO BANK_CONFIG(date, daysLimit, id, interestRate, monthlyQuota, perDayFee, perTransactionFee) VALUES('%s','%d','%d','%f', '%d', '%f', '%f')",
+		config->date, config->daysLimit, config->id, config->interestRate, config->monthlyQuota, config->perDayFee,config->perTransactionFee);
+	rc = sqlite3_exec(db, result, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK )
+	{
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	else 
+		printf("OK\n");
+}
+void setPerTransactionFee(){
+	char query[500];
+	char buf[50];
+	struct Config *config = (Config*)malloc(sizeof(Config));
+	double perTransactionFee;
+	char result[500];
+	time_t rawtime;
+	struct tm * timeinfo;
+	int id = 0;
+	printf("Set per transaction fee\n");
+	printf("Enter per transaction fee: ");
+	scanf("%lf", &perTransactionFee);
+
+	rc = sqlite3_exec(db, "SELECT MAX(id) FROM BANK_CONFIG", callbackInt, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	id = resSel;
+	strcpy(query, "SELECT * FROM BANK_CONFIG WHERE id=");
+	itoa(id, buf, 10);
+	strcat(query, buf);
+	rc = sqlite3_exec(db, query, callbackConfig, config, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	++id;
+	config->perTransactionFee = perTransactionFee;
+	config->id = id;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	strcat(query,  asctime (timeinfo));
+	strcpy(config->date,  asctime (timeinfo));
+    sprintf_s(result, 500, "INSERT INTO BANK_CONFIG(date, daysLimit, id, interestRate, monthlyQuota, perDayFee, perTransactionFee) VALUES('%s','%d','%d','%f', '%d', '%f', '%f')",
+		config->date, config->daysLimit, config->id, config->interestRate, config->monthlyQuota, config->perDayFee,config->perTransactionFee);
+	rc = sqlite3_exec(db, result, 0, 0, &zErrMsg);
+	if( rc!=SQLITE_OK )
+	{
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	else 
+		printf("OK\n");
+}
+void findClientsBySecondName()
+{
+	char query[500];
+	char secondName[100];
+	printf("Find clients by second name\n");
+	printf("Enter second name of the client: ");
+	scanf("%s", &secondName);
+	strcpy(query, "SELECT * FROM CLIENT WHERE second_name='");
+	strcat(query, secondName);
+	strcat(query, "'");
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
+	else
+		printf("OK\n");
 }
 static int findIdForNewAccount(void *NotUsed, int argc, char **argv, char **azColName){//
    int i;
