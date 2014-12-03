@@ -558,7 +558,7 @@ int showClientFromDB(char* arg1, char* arg2){
 	return 0;
 }
 int deleteClient(char* input) {
-	struct Client *client = (Client*)malloc(sizeof(Client));
+		struct Client *client = (Client*)malloc(sizeof(Client));
 	int pos = strlen(msgUpdateClient), id;
 	char* arg = (input + pos + 1);
 	char req[COUNT];
@@ -568,7 +568,7 @@ int deleteClient(char* input) {
 	char insertAccountIntoHistory[] = "INSERT INTO BANK_ACCOUNTS_DEL SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d';";
 	char insertCardsIntoHistory[] = "INSERT INTO CARD_DEL SELECT * FROM CARD WHERE CARD.accNum IN (SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d')";
 	char insertTransactionsIntoHistory[] = "INSERT INTO TRANSACTION_DEL SELECT * FROM \"TRANSACTION\" WHERE Account_number IN (SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d');";
-	char updateClientIntoHistory[] = "UPDATE CLIENT_DEL SET isDeleted = '1' WHERE CLIENT_DEL.id = '%d';";
+	char updateClientIntoHistory[] = "UPDATE CLIENT_DEL SET isDeleted = '1'AND email = '%s' AND password = '%s' WHERE CLIENT_DEL.id = '%d';";
 	char updateAccountIntoHistory[] = "UPDATE BANK_ACCOUNTS_DEL SET isDeleted = '1' WHERE BANK_ACCOUNTS_DEL.client_id = '%d';";
 	char updateCardsIntoHistory[] = "UPDATE CARD_DEL SET isDeleted = '1' WHERE CARD.accNum IN(SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d')";
 		
@@ -598,7 +598,7 @@ int deleteClient(char* input) {
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	sprintf_s(query, COUNT, insertTransactionsIntoHistory, client->id);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
-	sprintf_s(query, COUNT, updateClientIntoHistory, client->id);
+	sprintf_s(query, COUNT, updateClientIntoHistory, client->Email, client->Password, client->id);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	sprintf_s(query, COUNT, updateAccountIntoHistory, client->id);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
@@ -606,8 +606,7 @@ int deleteClient(char* input) {
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
 	sprintf_s(query, COUNT, deleteClient, client->id);
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
-	printf("\nDeleted\n");
-	free(client);
+	printf("\nOK\n");
 	return 0;
 }
 int deleteClientFromDB(char* id){
