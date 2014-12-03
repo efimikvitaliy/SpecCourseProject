@@ -950,6 +950,21 @@ int main()
 			else if(strcmp(str, msgShowAccounts) == 0){
 				accountList();
 			}
+			else if (!strcmp(str, "setInterestRate\n")){
+				setInterestRate();
+			}
+			else if (!strcmp(str, "setPerDayFee\n")){
+				setPerDayFee();
+			}
+			else if (!strcmp(str, "setMonthlyQuota\n")){
+				setMonthlyQuota();
+			}
+			else if (!strcmp(str, "setPerTransactionFee\n")){
+				setPerTransactionFee();
+			}
+			else if (!strcmp(str, "findClientsBySecondName\n")){
+				findClientsBySecondName();
+			}
 			else if (strncmp(str, msgDeleteClient, strlen(msgDeleteClient)) == 0) {
 				deleteClient(str);
 			}
