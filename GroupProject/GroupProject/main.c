@@ -10,6 +10,10 @@
 #define SHOWCARDS 10003
 const char msgAddClient[] = "addClient\n";
 const char msgShowClients[] = "showClients\n";
+
+const char msgShowDeletedClients[] = "showDeletedClients\n";
+const char msgShowClient[] = "showClient\0";
+
 const char msgDeleteClient[] = "deleteClient\0";
 const char msgUpdateClient[] = "updateClient\0";
 const char msgShowAccounts[] = "showAccounts\n";
@@ -472,18 +476,87 @@ int addClient() {
 	return 0;
 }
 int showClientsFromDB(){
-	
 	char *zErrMsg = 0;
 	int rc;
-	printf("-id-   -FirstName-         -SecondName-        -Email-        -Password- \n");
-	rc = sqlite3_exec(db, "SELECT * FROM CLIENT", callbackShow, SHOWCLIENTS, &zErrMsg);
+	//printf("-id-   -FirstName-         -SecondName-        -Email-        -Password-    -isDeleted- \n");
+	//rc = sqlite3_exec(db, "SELECT * FROM CLIENT", callbackShow, SHOWCLIENTS, &zErrMsg);
+	rc = sqlite3_exec(db, "SELECT * FROM CLIENT", callback, 0, &zErrMsg);
 	if (rc != SQLITE_OK){
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
 		sqlite3_free(zErrMsg);
 	}
 	return 0;
 }
+int showDeletedClientsFromDB(){
 
+	char *zErrMsg = 0;
+	int rc;
+	//printf("-id-   -FirstName-         -SecondName-        -Email-        -Password-    -isDeleted- \n");
+	//rc = sqlite3_exec(db, "SELECT * FROM CLIENT", callbackShow, SHOWCLIENTS, &zErrMsg);
+	rc = sqlite3_exec(db, "SELECT * FROM CLIENT_DEL WHERE isDeleted=1", callback, 0, &zErrMsg);
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	return 0;
+}
+int showClient(char* input) {
+	int pos = strlen(msgShowClient);
+	int delpos = strlen(input) - 1;
+	char* args;
+	if ((delpos >= pos) && (input[pos] == ' ')) {
+		args = input + pos + 1;
+		input[pos] = '\0';
+		if (strcmp(input, msgShowClient) == 0) {
+			
+			char *arg1 = "", *arg2 = "";
+			while ((*args != '\n') && (*args != ' ')) {
+				args++;
+			}
+			if (*args == ' ') {
+				*args = '\0';
+				arg1 = input + pos + 1;
+				args++;
+				arg2 = args;
+			}
+			else {
+				printf("error!");
+			}
+			while ((*args != ' ') && (*args != '\n')) {
+				args++;
+			}
+			*args = '\0';
+			showClientFromDB(arg1, arg2);
+			*(arg2 - 1) = ' ';
+		}
+		input[pos] = ' ';
+	}
+	return 0;
+}
+int showClientFromDB(char* arg1, char* arg2){
+
+	char *zErrMsg = 0;
+	int rc;
+	if (strcmp("id", arg1) == 0) {
+		char req[COUNT];
+		sprintf_s(req, COUNT, "select * from CLIENT WHERE id = \"%s\" ",arg2);
+		rc = sqlite3_exec(db, req, callback, 0, &zErrMsg);
+	}
+	else if (strcmp("email", arg1) == 0) {
+		char req[COUNT];
+		sprintf_s(req, COUNT, "select * from CLIENT WHERE email = \"%s\" ", arg2);
+		rc = sqlite3_exec(db, req, callback, 0, &zErrMsg);
+	}
+	else {
+		printf("NOT FIND");
+	}
+
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	return 0;
+}
 int deleteClient(char* input) {
 	struct Client *client = (Client*)malloc(sizeof(Client));
 	int pos = strlen(msgUpdateClient), id;
@@ -946,6 +1019,13 @@ int main()
 			}
 			else if (strcmp(str, msgShowClients) == 0) {
 				showClientsFromDB();
+			}
+			else if (strcmp(str, msgShowDeletedClients) == 0) {
+				showDeletedClientsFromDB();
+			}
+			else if (strncmp(str, msgShowClient, strlen(msgShowClient)) == 0) {
+				
+				showClient(str);
 			}
 			else if(strcmp(str, msgShowAccounts) == 0){
 				accountList();
