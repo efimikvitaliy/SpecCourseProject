@@ -4,7 +4,7 @@
 
 
 #define LIMITCHAR 20
-#define COUNT 100
+#define COUNT 300
 #define SHOWCLIENTS 10001
 #define SHOWACCOUNTS 10002
 #define SHOWCARDS 10003
@@ -447,7 +447,7 @@ static int unlockCard() {
 	printf("\nOK\n");
 }
 
-static int addClient() {
+int addClient() {
 	char firstName[LIMITCHAR];
 	char secondName[LIMITCHAR];
 	char email[LIMITCHAR];
@@ -478,11 +478,59 @@ int showClientsFromDB(){
 		sqlite3_free(zErrMsg);
 	}
 	return 0;
-}int deleteClient(char* input) {
-	char clientId[LIMITCHAR];
-	printf("Input Client id:");
-	scanf("%s", clientId);
-	deleteClientFromDB(clientId);
+}
+
+int deleteClient(char* input) {
+	struct Client *client = (Client*)malloc(sizeof(Client));
+	int pos = strlen(msgUpdateClient), id;
+	char* arg = (input + pos + 1);
+	char req[COUNT];
+	char query[COUNT], idChar[100], ans;
+	char deleteClient[] = "DELETE FROM CLIENT WHERE CLIENT.id = '%d';";
+	char insertClientIntoHistory[] = "INSERT INTO CLIENT_DEL SELECT * FROM CLIENT WHERE CLIENT.id = '%d';";
+	char insertAccountIntoHistory[] = "INSERT INTO BANK_ACCOUNTS_DEL SELECT * FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d';";
+	char insertCardsIntoHistory[] = "INSERT INTO CARD_DEL SELECT * FROM CARD WHERE CARD.accNum IN (SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d')";
+	char insertTransactionsIntoHistory[] = "INSERT INTO TRANSACTION_DEL SELECT * FROM \"TRANSACTION\" WHERE Account_number IN (SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d');";
+	char updateClientIntoHistory[] = "UPDATE CLIENT_DEL SET isDeleted = '1' WHERE CLIENT_DEL.id = '%d';";
+	char updateAccountIntoHistory[] = "UPDATE BANK_ACCOUNTS_DEL SET isDeleted = '1' WHERE BANK_ACCOUNTS_DEL.client_id = '%d';";
+	char updateCardsIntoHistory[] = "UPDATE CARD_DEL SET isDeleted = '1' WHERE CARD.accNum IN(SELECT account_id FROM BANK_ACCOUNTS WHERE BANK_ACCOUNTS.client_id = '%d')";
+		
+	input[strlen(input) - 1] = '\0';
+	if (!atoi(arg))
+	{
+		printf("Incorrect id\n");
+		return -1;
+	}
+	id = atoi(arg);
+	client->id = -1;
+	sprintf_s(req, COUNT, "select * from CLIENT WHERE id = '%d' ", id);
+	rc = sqlite3_exec(db, req, callbackClient, client, &zErrMsg);
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	if (client->id == -1) {
+		printf("Invalid clientId\n");
+		return -1;
+	}
+	sprintf_s(query, COUNT, insertClientIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, insertAccountIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, insertCardsIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, insertTransactionsIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, updateClientIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, updateAccountIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, updateCardsIntoHistory, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	sprintf_s(query, COUNT, deleteClient, client->id);
+	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+	printf("\nDeleted\n");
+	free(client);
 	return 0;
 }
 int deleteClientFromDB(char* id){
@@ -503,60 +551,56 @@ int deleteClientFromDB(char* id){
 
 	return 0;
 }
+
 int updateClient(char* input) {
 	struct Client *client = (Client*)malloc(sizeof(Client));
-	int pos = strlen(msgUpdateClient);
-	int delpos = strlen(input) - 1;
-	char *zErrMsg = 0;
-	char* args;
-	int rc;
+	int pos = strlen(msgUpdateClient), id;
+	char* arg = (input + pos + 1);
 	char req[COUNT];
+	char req1[COUNT];
 	char email[COUNT];
 	char password[LIMITCHAR];
-	char req1[COUNT];
-	if ((delpos >= pos) && (input[pos] == ' ')) {
-		args = input + pos + 1;
-		input[pos] = '\0';
-		if (strcmp(input, msgUpdateClient) == 0) {
-			char *arg1 = "";
-			while ((*args != '\n') && (*args != ' ')) {
-				args++;
-			}
-			*args = ' ';
-			arg1 = input + pos + 1;
-			client->id = -1;
-			
-			sprintf_s(req, COUNT, "select * from CLIENT WHERE id = \"%s\" ", arg1);
-			rc = sqlite3_exec(db, req, callbackClient, client, &zErrMsg);
-			if (rc != SQLITE_OK){
-				fprintf(stderr, "SQL error: %s\n", zErrMsg);
-				sqlite3_free(zErrMsg);
-			}
-			if (client->id == -1) {
-				printf("Invalid clientId\n");
-				return 0;
-			}
-			printf(msgEnterEmail);
-			fgets(email, COUNT, stdin);
-			pos = strlen(email) - 1;
-			if (email[pos] == '\n')
-				email[pos] = '\0';
-			strcpy_s(client->Email, COUNT, email);
-			printf(msgEnterPassword);
-			fgets(password, LIMITCHAR, stdin);
-			pos = strlen(password) - 1;
-			if (password[pos] == '\n')
-				password[pos] = '\0';
-			strcpy_s(client->Password, LIMITCHAR, password);
-			
-			sprintf_s(req1, COUNT, "UPDATE CLIENT SET email='%s', password='%s' WHERE id='%d'",
-				client->Email, client->Password, client->id);
-			rc = sqlite3_exec(db, req1, NULL, NULL, &zErrMsg);
-			printf("updated\n");
-			free(client);			
-		}
-		input[pos] = ' ';
+	input[strlen(input) - 1] = '\0';
+	if (!atoi(arg))
+	{
+		printf("Incorrect id\n");
+		return -1;
 	}
+	id = atoi(arg);
+	client->id = -1;
+			
+	sprintf_s(req, COUNT, "select * from CLIENT WHERE id = '%d' ", id);
+	rc = sqlite3_exec(db, req, callbackClient, client, &zErrMsg);
+	if (rc != SQLITE_OK){
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	if (client->id == -1) {
+	     printf("Invalid clientId\n");
+		 return -1;
+	}
+	printf("CLient info : \n First Name : %s \n Second Name : %s \n Password : %s \n Email : %s \n",
+		client->FirstName, client->SecondName, client->Password, client->Email);
+	printf(msgEnterEmail);
+	fgets(email, COUNT, stdin);
+	pos = strlen(email) - 1;
+	if (email[pos] == '\n')
+		email[pos] = '\0';
+	if (strcmp(email,"") != 0)
+		strcpy_s(client->Email, COUNT, email);
+	printf(msgEnterPassword);
+	fgets(password, LIMITCHAR, stdin);
+	pos = strlen(password) - 1;
+	if (password[pos] == '\n')
+		password[pos] = '\0';
+	if (strcmp(password,"") != 0)
+	    strcpy_s(client->Password, LIMITCHAR, password);
+		
+	sprintf_s(req1, COUNT, "UPDATE CLIENT SET email='%s', password='%s' WHERE id='%d'",
+		client->Email, client->Password, client->id);
+	rc = sqlite3_exec(db, req1, NULL, NULL, &zErrMsg);
+	printf("updated\n");
+	free(client);
 	return 0;
 }
 
