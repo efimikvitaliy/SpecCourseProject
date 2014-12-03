@@ -788,6 +788,7 @@ void getAddMoney(int ot){
 	sqlite3_exec(db, "COMMIT", 0, 0, &zErrMsg);
 	printf("OK\n");
 }
+
 int accountList(){
 	char query[1000] = "SELECT * FROM BANK_ACCOUNTS;";
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
@@ -844,11 +845,29 @@ int createCard() {
 	printf("Enter card pin:\n");
 	scanf("%s", &card_pin);
 	printf("Creating card....\n");
+
+	rc = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
+	if (rc != SQLITE_OK) {
+		fprintf(stderr, "SQL BEGIN error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return;
+	}
 	sprintf_s(query, 1000, card_insert, card_number, card_pin, accaunt_number, card_csv, expire_date);
 	rc = sqlite3_exec(db, query, 0, 0, &zErrMsg);
 	if (rc != SQLITE_OK) {
-		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_exec(db, "ROLLBACK;", 0, 0, 0);
+		if (strcmp(zErrMsg, "PRIMARY KEY must be unique") == 0) {
+			printf("Card with number %d is exist aborting...\n", card_number);
+		}
+		//fprintf(stderr, "SQL ROLL error: %s\n", zErrMsg);
+		//sqlite3_free(zErrMsg);
+		return;
+	}
+	rc = sqlite3_exec(db, "COMMIT;", 0, 0, 0);
+	if (rc != SQLITE_OK) {
+		fprintf(stderr, "SQL Commit error: %s\n", zErrMsg);
 		sqlite3_free(zErrMsg);
+		return;
 	}
 	printf("Card added.\n");
 	return 0;
