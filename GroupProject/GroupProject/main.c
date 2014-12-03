@@ -695,6 +695,7 @@ void getAddMoney(int ot){
 	}
 	printf("Choose type: 1- card, 2- account\n");
 	scanf("%d", &type);
+
 	if(type == 1){
 		printf("Card number:\n");
 		scanf("%s", &buf);
@@ -740,6 +741,12 @@ void getAddMoney(int ot){
 	else if(ot == 2){
 		balance += add_bal;
 	}
+	rc = sqlite3_exec(db, "BEGIN", NULL, 0, &zErrMsg);
+	if( rc!=SQLITE_OK ){
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+			return;
+	}
 	strcpy(queryBalance, "UPDATE BANK_ACCOUNTS SET balance = ");
 	itoa(balance, buf, 10);
 	strcat(queryBalance, buf);
@@ -750,6 +757,7 @@ void getAddMoney(int ot){
 	rc = sqlite3_exec(db, queryBalance, 0, 0, &zErrMsg);
 	if( rc!=SQLITE_OK ){
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_exec(db, "ROLLBACK", 0, 0, &zErrMsg);
 		sqlite3_free(zErrMsg);
 		return;
 	}
@@ -759,6 +767,7 @@ void getAddMoney(int ot){
 	rc = sqlite3_exec(db, queryBalance, callbackInt, 0, &zErrMsg);
 	if( rc!=SQLITE_OK ){
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_exec(db, "ROLLBACK", 0, 0, &zErrMsg);
 		sqlite3_free(zErrMsg);
 		return;
 	}
@@ -772,12 +781,13 @@ void getAddMoney(int ot){
 	rc = sqlite3_exec(db, queryBalance, 0, 0, &zErrMsg);
 	if( rc!=SQLITE_OK ){
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_exec(db, "ROLLBACK", 0, 0, &zErrMsg);
 		sqlite3_free(zErrMsg);
 		return;
 	}
+	sqlite3_exec(db, "COMMIT", 0, 0, &zErrMsg);
 	printf("OK\n");
 }
-
 int accountList(){
 	char query[1000] = "SELECT * FROM BANK_ACCOUNTS;";
 	rc = sqlite3_exec(db, query, callback, 0, &zErrMsg);
