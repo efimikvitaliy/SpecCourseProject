@@ -857,8 +857,12 @@ int createCard() {
 	if (rc != SQLITE_OK) {
 		sqlite3_exec(db, "ROLLBACK;", 0, 0, 0);
 		if (strcmp(zErrMsg, "PRIMARY KEY must be unique") == 0) {
-			printf("Card with number %d is exist aborting...\n", card_number);
+			printf("Card with number %d is exist.\n", card_number);
+		} else {
+			printf("Something went wrong...\n");		
 		}
+		printf("Aborting...\n");
+
 		//fprintf(stderr, "SQL ROLL error: %s\n", zErrMsg);
 		//sqlite3_free(zErrMsg);
 		return;
