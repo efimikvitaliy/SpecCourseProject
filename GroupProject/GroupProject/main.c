@@ -14,11 +14,13 @@ const char msgDeleteClient[] = "deleteClient\0";
 const char msgUpdateClient[] = "updateClient\0";
 const char msgShowAccounts[] = "showAccounts\n";
 const char msgShowBalance[] = "showBalance";
+const char msgInsertCard[] = "addCard\0";
 
 const char msgEnterFirstName[] = "Enter First Name: \n";
 const char msgEnterSecondName[] = "Enter Second Name: \n";
 const char msgEnterEmail[] = "Enter Email address: \n";
 const char msgEnterPassword[] = "Enter Password: \n";
+
 
 char login[100], password[100];
 int type;
@@ -30,6 +32,8 @@ int isTrue = 1;
 char *zErrMsg = 0;
 int rc;
 int resSel = 0;
+int retRows = 0;
+
 
 struct Client{
 	int id;
@@ -662,7 +666,6 @@ int showBalanceCalled() {
 }
 
 static int getTypeOfUser(void *NotUsed, int argc, char **argv, char **azColName){
-   
     if( 0 < argc ){
       type = atoi(argv[2]);
 	}
@@ -787,6 +790,60 @@ int accountList(){
 }
 
 
+static int bankAccCallback(void *NotUsed, int argc, char **argv, char **azColName){
+	retRows = argc;
+	return 0;
+}
+
+
+int createCard() {
+	int accaunt_number, rc, card_number, card_csv;
+	char *zErrMsg = 0;
+	char query[1000], expire_date[20],card_pin[50];
+	char acc_query[] = "SELECT * FROM BANK_ACCOUNTS WHERE account_id=%d;";
+	char card_insert[] = "INSERT INTO CARD (id, pass, accNum, csv, expireDate,isDeleted,isLocked) VALUES (%d,'%s',%d,%d,'%s',0,0);";
+	printf("Adding card....\n");
+	printf("Please enter accaunt number for this card:\n");
+	
+	do {
+		retRows = 0;
+		scanf("%d", &accaunt_number);
+
+		if (accaunt_number == 0) return;
+		sprintf_s(query, 1000, acc_query, accaunt_number);
+		rc = sqlite3_exec(db, query, bankAccCallback, 0, &zErrMsg);
+		if (rc != SQLITE_OK) {
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+		}
+		if (retRows != 0) {
+			break;
+		}
+		else {
+			printf("Sorry, but accaunt with this number does not exist.\n");
+			printf("Reenter number or type 0 for exit form this operation.\n");
+		}
+	} while (1);
+
+	printf("Enter card number for this card:\n");
+	scanf("%d", &card_number);
+	printf("Enter card csv:\n");
+	scanf("%d", &card_csv);
+	printf("Enter card expire date (ex. 8/16):\n");
+	scanf("%s", &expire_date);
+	printf("Enter card pin:\n");
+	scanf("%s", &card_pin);
+	printf("Creating card....\n");
+	sprintf_s(query, 1000, card_insert, card_number, card_pin, accaunt_number, card_csv, expire_date);
+	rc = sqlite3_exec(db, query, 0, 0, &zErrMsg);
+	if (rc != SQLITE_OK) {
+		fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+	}
+	printf("Card added.\n");
+	return 0;
+}
+
 int main()
 {
 	int a;
@@ -837,6 +894,7 @@ int main()
 			if(!strcmp(str, "help\n")){
 				printf("\naddClient - add client\nupdateClient client_id - update client\n");
 				printf("\naddAccount - add account\ndelAccount - delete account\nlockCard - lock card\nunlockCard - unlock card\n");
+				printf("\naddCard - add new card to some account\n");
 			}
 			else if(!strcmp(str, "addAccount\n" )){
 				addAccount();
@@ -864,6 +922,9 @@ int main()
 			}
 			else if (strncmp(str, msgUpdateClient, strlen(msgUpdateClient)) == 0) {
 				updateClient(str);
+			}
+			else if (strncmp(str, msgInsertCard, strlen(msgInsertCard)) == 0) {
+				createCard();
 			}
 			else if(!strcmp(str,"exit\n")){
 				isTrue = 0;
