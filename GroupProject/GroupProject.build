@@ -18,7 +18,6 @@ file="GroupProject\Database2.db"
     
 tofile="Release\Database2.db" />
 
-<exec program="Release\GroupProject.exe" />
 </target>
 
 </project>
