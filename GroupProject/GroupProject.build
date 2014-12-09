@@ -2,7 +2,13 @@
 
 <project name="GroupProject" default="all" xmlns="http://nant.sf.net/schemas/nant.xsd">
 
- <target name="all" >
+ <target name="all">
+
+<copy 
+    
+file="GroupProject\Database2.db"
+    
+tofile="GroupProject.Tests\Database2.db" />
 
 <property name="msbuild.dir" value="C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319" />
 
@@ -18,6 +24,11 @@ file="GroupProject\Database2.db"
     
 tofile="Release\Database2.db" />
 
+</target>
+
+
+<target name="tests">
+<exec program="Release\GroupProject.Test.exe" />
 </target>
 
 </project>
