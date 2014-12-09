@@ -4,12 +4,6 @@
 
  <target name="buildAll">
 
-<copy 
-    
-file="GroupProject\Database2.db"
-    
-tofile="GroupProject.Tests\Database2.db" />
-
 <property name="msbuild.dir" value="C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319" />
 
 
