@@ -2,7 +2,7 @@
 
 <project name="GroupProject" default="all" xmlns="http://nant.sf.net/schemas/nant.xsd">
 
- <target name="all">
+ <target name="buildAll">
 
 <copy 
     
@@ -29,6 +29,9 @@ tofile="Release\Database2.db" />
 
 <target name="tests">
 <exec program="Release\GroupProject.Test.exe" />
+</target>
+
+<target name="all" depends="buildAll, tests">
 </target>
 
 </project>
