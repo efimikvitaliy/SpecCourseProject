@@ -68,6 +68,11 @@
   <ItemGroup>
     <ClCompile Include="tests.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GroupProject\GroupProject.vcxproj">
+      <Project>{b1f465d5-99b0-48ee-ae3f-dfb18606a863}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
