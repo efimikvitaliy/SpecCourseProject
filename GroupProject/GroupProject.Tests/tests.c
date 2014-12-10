@@ -16,22 +16,62 @@ int failureTest(){
 
 int testDeleteClient() {
 	int ret = 0;
-	if (deleteClient("deleteClient asd") != 1) {
-		printf("!!!!!!!!!!!!!!!!!!!!!!!!DeleteClien with correct id\n");
-		ret = 0;
+	if (checkCorrectId("asd") == 1) {
+		printf("Test 1 DeleteClient OK\n");
 	}
 	else {
-		printf("------------------------DeleteClien with incorrect id\n");
+		printf("Test 1 DeleteClient FAILED\n");
+		ret = 1;
+	}
+	if (checkCorrectId("1") == 0) {
+		printf("Test 2 DeleteClient OK\n");
+	}
+	else {
+		printf("Test 2 DeleteClient FAILED\n");
 		ret = 1;
 	}
 	return ret;
 }
+
+int testDelAccount() {
+	int ret = 0;
+	if (checkAccountId("q") == 1) {
+		printf("Test 1 of delAccount OK\n");
+		
+	}
+	else {
+
+		printf("Test 1 of delAccount FAILED\n"); 
+		ret = 1;
+		
+	}
+	if (checkAccountId("1") == 0) {
+		printf("Test 2 of delAccount OK\n");
+		
+	}
+	else {
+
+		printf("Test 2 of delAccount FAILED\n");
+		ret = 1;
+	}if (checkAccountId("-1") == 1) {
+		printf("Test 3 of delAccount OK\n");
+		
+	}
+	else {
+
+		printf("Test 3 of delAccount FAILED\n");
+		ret = 1;
+	}
+	return ret;
+}
+
 
 int main()
 {
 	int res = 0;
 	res += successfullTest();
 	res += testDeleteClient();
+	res += testDelAccount();
 
 	if (res != 0){
 		printf("Tests failed!");
@@ -39,6 +79,6 @@ int main()
 	else{
 		printf("Tests succeeded!");
 	}
-
+	
 	return res;
 }
