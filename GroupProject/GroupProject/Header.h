@@ -10,9 +10,11 @@ int checkCorrectId(char* arg) {
 
 
 int checkAccountId(char* arg) {
+	int a;
+
 	if (!atoi(arg))
 		return 1;
-	int a= atoi(arg);
+	a= atoi(arg);
 	if (a <= 0)
 		return 1;
 	return 0;
