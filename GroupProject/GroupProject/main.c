@@ -17,7 +17,7 @@ const char msgShowClient[] = "showClient\0";
 
 const char msgDeleteClient[] = "deleteClient\0";
 const char msgUpdateClient[] = "updateClient\0";
-const char msgShowAccounts[] = "showAccounts\n";
+const char msgShowAccounts[] = "showAccounts";
 const char msgShowBalance[] = "showBalance";
 const char msgInsertCard[] = "addCard\0";
 
@@ -1030,7 +1030,7 @@ int main()
 				
 				showClient(str);
 			}
-			else if(strcmp(str, msgShowAccounts) == 0){
+			else if(strcmp(str, "showAccounts\n") == 0){
 				accountList();
 			}
 			else if (!strcmp(str, "setInterestRate\n")){
