@@ -1,13 +1,31 @@
 <?xml version="1.0" ?>
+
 <project name="GroupProject" default="all" xmlns="http://nant.sf.net/schemas/nant.xsd">
- <target name="all" >
+
+ <target name="buildAll">
+
 <property name="msbuild.dir" value="C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319" />
 
 
 
-<exec program="${msbuild.dir}\MSBuild.exe" commandline="/tv:4.0 /p:PlatformToolset=v110 /p:Configuration=Debug .\GroupProject.sln"/>
+
+<exec program="${msbuild.dir}\MSBuild.exe" 
+commandline="/tv:4.0 /p:PlatformToolset=v110 /p:Configuration=Release .\GroupProject.sln"/>
+
 <copy 
-    file="GroupProject\Database2.db"
-    tofile="Debug\Database2.db" />
+    
+file="GroupProject\Database2.db"
+    
+tofile="Release\Database2.db" />
+
 </target>
+
+
+<target name="tests">
+<exec program="Release\GroupProject.Test.exe" />
+</target>
+
+<target name="all" depends="buildAll, tests">
+</target>
+
 </project>
